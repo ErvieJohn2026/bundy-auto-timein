@@ -1,0 +1,44 @@
+name: Bundy Time Out
+
+on:
+  schedule:
+    # 5:05-5:20 PM PHT = 9:05-9:20 AM UTC
+    - cron: "5-20 9 * * 1,2,4,5"
+
+  workflow_dispatch:
+
+jobs:
+  timeout:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Random minute
+        shell: bash
+        run: |
+          MINUTE=$(date -u +%-M)
+
+          TARGET=$((5 + RANDOM % 16))
+
+          echo "Current: $MINUTE"
+          echo "Target : $TARGET"
+
+          [ "$MINUTE" = "$TARGET" ]
+
+      - name: Time Out
+        run: |
+          python main.py \
+            timeout \
+            "${{ secrets.LAT }}" \
+            "${{ secrets.LONG }}" \
+            "${{ secrets.LOCATION }}" \
+            --code "${{ secrets.CODE }}" \
+            --user "${{ secrets.USERNAME }}" \
+            --passw "${{ secrets.PASSWORD }}"
