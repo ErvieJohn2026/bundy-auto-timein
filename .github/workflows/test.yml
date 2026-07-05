@@ -1,0 +1,39 @@
+name: Test Random
+
+on:
+  schedule:
+    # 2:30-2:33 AM PHT = 6:30-6:33 PM UTC (previous day)
+    - cron: "30-33 18 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Random execution
+        shell: bash
+        run: |
+          MINUTE=$(date -u +%-M)
+
+          # Pick a random minute: 30,31,32,33
+          TARGET=$((30 + RANDOM % 4))
+
+          echo "Current minute: $MINUTE"
+          echo "Target minute : $TARGET"
+
+          if [ "$MINUTE" != "$TARGET" ]; then
+            echo "Not selected."
+            exit 0
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run test
+        run: python test.py
