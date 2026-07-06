@@ -1,9 +1,10 @@
-name: Test Random
+name: Test PHT Time Window
 
 on:
   schedule:
-    # 2:30-2:33 AM PHT = 6:30-6:33 PM UTC (previous day)
-    - cron: "41-45 18 * * *"
+    # Every minute from 7:30–7:45 AM PHT
+    # (23:30–23:45 UTC of the previous day)
+    - cron: "13-16 9 * * 0,1,3,4"
 
   workflow_dispatch:
 
@@ -14,26 +15,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Random execution
-        shell: bash
-        run: |
-          MINUTE=$(date -u +%-M)
-
-          # Pick a random minute: 30,31,32,33
-          TARGET=$((30 + RANDOM % 4))
-
-          echo "Current minute: $MINUTE"
-          echo "Target minute : $TARGET"
-
-          if [ "$MINUTE" != "$TARGET" ]; then
-            echo "Not selected."
-            exit 0
-          fi
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Run test
-        run: python test.py
+      - name: Verify PHT Window
+        shell: bash
+        run: |
+          PHT=$(TZ=Asia/Manila date +%H:%M)
+
+          echo "Current PHT: $PHT"
+
+          if [[ "$PHT" < "07:30" || "$PHT" > "07:45" ]]; then
+            echo "Outside allowed window."
+            exit 0
+          fi
+
+          echo "Inside allowed window."
+
+      - name: Run test.py
+        run: |
+          python test.py
